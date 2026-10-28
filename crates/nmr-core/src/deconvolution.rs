@@ -183,7 +183,9 @@ fn shape(x: f64, center: f64, width: f64, q: f64) -> f64 {
 
 // Parameters are centre in points, log(width in points), normalized height, shape.
 fn model(x: f64, p: &[f64]) -> f64 {
-    p.chunks_exact(4)
+    p.as_chunks::<4>()
+        .0
+        .iter()
         .map(|p| p[2] * shape(x, p[0], p[1].exp(), p[3]))
         .sum()
 }
@@ -232,7 +234,7 @@ fn refine(xs: &[f64], ys: &[f64], p: &mut Vec<f64>, signed: bool) -> bool {
         let mut b = vec![0.0; n];
         let mut jac = vec![0.0; n];
         for (&x, &y) in xs.iter().zip(ys) {
-            for (i, c) in p.chunks_exact(4).enumerate() {
+            for (i, c) in p.as_chunks::<4>().0.iter().enumerate() {
                 let width = c[1].exp();
                 let t = 2.0 * (x - c[0]) / width;
                 let s = t * t;
@@ -283,7 +285,7 @@ fn refine(xs: &[f64], ys: &[f64], p: &mut Vec<f64>, signed: bool) -> bool {
             return false;
         };
         let mut candidate: Vec<f64> = p.iter().zip(&delta).map(|(x, d)| x + d).collect();
-        for c in candidate.chunks_exact_mut(4) {
+        for c in candidate.as_chunks_mut::<4>().0 {
             c[0] = c[0].clamp(low, high);
             c[1] = c[1].clamp(1.2_f64.ln(), ((high - low) / 3.0).max(1.21).ln());
             c[2] = c[2].clamp(if signed { -2.0 } else { 0.0 }, 2.0);
@@ -531,7 +533,9 @@ pub fn deconvolve(
                         height > cutoff / scale
                             && height >= residual[i - 1].abs()
                             && height >= residual[i + 1].abs()
-                            && p.chunks_exact(4)
+                            && p.as_chunks::<4>()
+                                .0
+                                .iter()
                                 .all(|c| (xs[i] - c[0]).abs() > 0.35 * c[1].exp())
                     })
                     .max_by(|&i, &j| residual[i].abs().total_cmp(&residual[j].abs()));
@@ -539,7 +543,9 @@ pub fn deconvolve(
                     break;
                 };
                 let nearest = p
-                    .chunks_exact(4)
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
                     .min_by(|a, b| (a[0] - xs[i]).abs().total_cmp(&(b[0] - xs[i]).abs()))
                     .unwrap();
                 let width = nearest[1].exp() * 0.7;
@@ -561,7 +567,7 @@ pub fn deconvolve(
         }
         let rms = (objective(&xs, &ys, &p) / xs.len() as f64).sqrt() * scale;
         region.rms = rms.is_finite().then_some(rms);
-        let components: Vec<_> = p.chunks_exact(4).collect();
+        let components: Vec<_> = p.as_chunks::<4>().0.iter().collect();
         let undersampled = components
             .iter()
             .any(|c| c[1].exp() / (stride as f64) < 2.0 - 1e-6);

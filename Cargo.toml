@@ -1,0 +1,21 @@
+[workspace]
+resolver = "3"
+members = ["apps/desktop/src-tauri", "crates/nmr-core"]
+
+[workspace.package]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+version = "0.1.0"
+
+[profile.release]
+debug = 1
+
+# The numerical work - Fourier transforms, the Whittaker baseline, peak picking -
+# runs about ten times slower unoptimised, which made `tauri dev` slow to open a
+# project of many spectra. Optimise it in debug builds too; the rest keeps fast
+# compiles and full debugging.
+[profile.dev.package.nmr-core]
+opt-level = 3
+
+[profile.dev.package.rustfft]
+opt-level = 3

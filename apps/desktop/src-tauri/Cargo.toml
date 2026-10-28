@@ -1,0 +1,22 @@
+[package]
+name = "opennmr"
+description = "openNMR desktop app"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+krilla = "0.8.2"
+krilla-svg = "0.8.1"
+nmr-core = { path = "../../../crates/nmr-core" }
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+usvg = "0.47"
+zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
+
+[dev-dependencies]
+serde_json = "1"

@@ -1,0 +1,39 @@
+# Rust / Node build output
+target/
+node_modules/
+dist/
+apps/desktop/src-tauri/gen/
+apps/desktop/public/preview-data/
+.venv/
+__pycache__/
+coverage/
+*.log
+
+# OS / editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.p12
+*.pfx
+*.mobileprovision
+*.cer
+*.key
+
+# Packaged apps and installers (publish these as GitHub Releases)
+*.dmg
+*.msi
+*.exe
+*.AppImage
+*.deb
+*.rpm
+*.app.tar.gz
+*.app
+
+docs/
+example/
+testdata/

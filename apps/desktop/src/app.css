@@ -1,0 +1,508 @@
+/* The silica plate. Light is the plate on the bench: matte off-white silica,
+   graphite ink. Dark is the plate under the lamp: UV violet-black. Three roles
+   that were one colour are two colours now:
+   - --accent, the theme's own accent: what acts (the primary button), focus,
+     the lines set by hand on the plot, and what is live (the open stage, the
+     tool in hand, the selection, the line under the pointer). A second colour
+     for what is live, a green, read as a stray colour beside a theme's accent;
+   - the traces, the developing stains (CAM, permanganate, anisaldehyde,
+     vanillin, iodine, phosphomolybdic acid), which never tint the chrome.
+   Integrals are pencil marks, quieter than the spectrum they measure. */
+:root {
+  color-scheme: light dark;
+  --bg: #fcfcfa;
+  --panel: #f2f2ee;
+  --border: #dbdbd3;
+  --fg: #24262b;
+  --muted: #5b5f68;
+  --accent: #2b2e35;
+  --live: var(--accent);
+  --trace: #2b59a6;
+  --integral: #555a63;
+  /* A baseline being drawn by hand is what is live while it is drawn. */
+  --baseline-model: var(--live);
+  --error-bg: #fbe9e7;
+  --error-fg: #9b1c1c;
+  --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* For what the app has written out to be read or copied, where the figures
+     have to line up and a letter must not be mistaken for a digit. */
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+
+  /* Spacing says what belongs together: small within a thing, larger between
+     things, largest between parts of the page. Values outside this scale are
+     accidents, and there were twenty-seven of them. */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 12px;
+  --space-6: 16px;
+
+  /* Corners by role: something to click or type into, something that holds
+     other things, something floating above the page. */
+  --radius-control: 6px;
+  --radius-inner: 4px;
+  --radius-overlay: 10px;
+
+  /* Four roles, not five sizes: metadata, the quiet name of a section, ordinary
+     text, and the title of a window. Hierarchy comes from these before it comes
+     from weight or colour. */
+  --text-caption: 11px;
+  --text-label: 12px;
+  --text-body: 13px;
+  --text-title: 15px;
+  /* The name of a window, which has to stand above the names of its parts. */
+  --text-heading: 16px;
+
+  /* One height for everything that can be clicked or typed into, so a row of
+     mixed controls sits on one line. */
+  --control-height: 28px;
+  /* A pointer over something that can be clicked, and something switched on. */
+  --hover: color-mix(in srgb, var(--fg) 7%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+  --live-soft: color-mix(in srgb, var(--live) 16%, transparent);
+  --shadow-overlay: 0 8px 28px rgb(0 0 0 / 18%), 0 1px 3px rgb(0 0 0 / 10%);
+  font:
+    13px/1.4 system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+
+/* The theme follows the system unless data-theme on <html> says otherwise, so
+   both rules below carry the same values. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #16131d;
+    --panel: #1d1926;
+    --border: #312b3f;
+    --fg: #ebe8f3;
+    --muted: #a6a0b8;
+    --accent: #ddd8ea;
+    --trace: #82a8ff;
+    --integral: #b9b3c8;
+    --baseline-model: var(--live);
+    --error-bg: #3a1d26;
+    --error-fg: #ffb4b4;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #16131d;
+  --panel: #1d1926;
+  --border: #312b3f;
+  --fg: #ebe8f3;
+  --muted: #a6a0b8;
+  --accent: #ddd8ea;
+  --trace: #82a8ff;
+  --integral: #b9b3c8;
+  --baseline-model: var(--live);
+  --error-bg: #3a1d26;
+  --error-fg: #ffb4b4;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font);
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  overflow: hidden;
+  user-select: none;
+}
+
+button,
+select {
+  min-height: var(--control-height);
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 0 10px;
+}
+
+/* Buttons come in four kinds and no others. Plain, above, for forms and
+   dialogs; ghost, with no frame until it is pointed at, for bars of tools;
+   primary, filled in graphite, for the one thing a group is for; and icon, a
+   ghost square. Switched on is never shown like the primary: a faint wash, the
+   words in the ink of the text; the tool in hand has the F254 wash, icon lit. */
+button {
+  display: inline-flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+button > svg {
+  flex: none;
+}
+
+button.ghost {
+  border-color: transparent;
+  background: none;
+}
+
+button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* One icon button for the whole application: a quiet square with a target big
+   enough to hit. There were three of these, differing by a pixel of padding,
+   none of them a square and only one with anything to say on hover. */
+button.icon {
+  width: var(--control-height);
+  padding: 0;
+  border-color: transparent;
+  background: none;
+  color: var(--muted);
+}
+
+button.icon:hover:not(:disabled) {
+  color: var(--fg);
+}
+
+/* Something the application has written out to be read or taken away: the line a
+   report would print, quoted back. */
+.quote {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-control);
+  background: var(--bg);
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* What the interface says when there is nothing to show yet, or when something
+   needs explaining quietly. Three files wrote this out identically. */
+.hint {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* The quiet uppercase name of a section or a group. Written out five times in
+   three files before this. */
+/* The title a column carries at its top, kept in view as the column scrolls. */
+.column-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.section-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+
+input[type='text'],
+input[type='search'],
+input[type='number'],
+input:not([type]) {
+  appearance: none;
+  min-height: var(--control-height);
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 0 var(--space-3);
+}
+
+input[type='number'] {
+  width: 4rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The steppers are a pair of native arrows in the middle of flat controls, and
+   the wheel and the arrow keys change the value without them. */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+input[type='text']:hover:not(:disabled),
+input[type='search']:hover:not(:disabled),
+input[type='number']:hover:not(:disabled),
+input:not([type]):hover:not(:disabled),
+select:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+/* One ring, in the app's own colour, rather than the platform's. */
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Read by screen readers, never seen. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Selected text in the app's accent, not the platform's highlight. */
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+input:disabled,
+select:disabled {
+  opacity: 0.45;
+}
+
+/* WebKit draws <select> natively unless appearance is reset, so it would not
+   match the buttons. */
+select {
+  appearance: none;
+  padding-right: 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23889' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+
+/* Native checkboxes are a system blue block beside flat, quiet controls. */
+input[type='checkbox'] {
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+input[type='checkbox']:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+input[type='checkbox']:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* The tick is drawn rather than set as a glyph, so it sits right at any size. */
+input[type='checkbox']:checked::after {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 6px;
+  margin: 1px 0 0 4px;
+  border: solid var(--bg);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+input[type='checkbox']:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* Browsers draw range inputs natively, which does not match the flat buttons. */
+input[type='range'] {
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  background: none;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+input[type='range']::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+input[type='range']:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+button:hover:not(:disabled, .primary) {
+  background: var(--hover);
+}
+
+button:disabled {
+  opacity: 0.4;
+}
+
+/* A switch that is on (Snap, what the plot draws, a panel) is pressed in
+   graphite; only the tool in hand is lit in F254, as the open stage and the
+   selection are, so the one green says which tool and stage are live. */
+button[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+button[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+button.tool[aria-pressed='true'],
+button.tool[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--live-soft);
+}
+
+button.tool[aria-pressed='true'] > svg {
+  color: var(--live);
+}
+
+/* A menu that is open is not a state of the work: its button only stays lit. */
+button[aria-expanded='true'] {
+  border-color: transparent;
+  background: var(--hover);
+}
+
+/* Every window is the same shape: its name and a close button along the top,
+   what it is about in the middle, and what it can do along the foot, the main
+   thing last. Five windows had grown five shapes. The markup is written out in
+   each (Svelte scopes a component's styles, so a shared component would lose
+   the styles of what it holds); the shape is here. */
+dialog.window {
+  width: min(440px, 92vw);
+  max-height: min(86vh, 900px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-overlay);
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: var(--shadow-overlay);
+}
+
+dialog.window[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+dialog.window::backdrop {
+  background: rgb(0 0 0 / 40%);
+}
+
+dialog.window > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border);
+}
+
+dialog.window > header h2 {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: 600;
+}
+
+dialog.window > .window-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  overflow-y: auto;
+}
+
+dialog.window > footer {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: flex-end;
+  padding: var(--space-5) var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+dialog.window > footer .hint {
+  margin-right: auto;
+}
+
+/* A field that does not look like one until it is pointed at: a name in a list,
+   a label in a table. It keeps no height of its own, so a table of them stays as
+   dense as its rows. */
+/* Written with its element, and after the rules every input follows, so it
+   outranks them: before, they drew these as ordinary boxed fields. */
+input.quiet-field,
+.quiet-field {
+  width: 100%;
+  min-height: 0;
+  padding: var(--space-1) var(--space-2);
+  border-color: transparent;
+  background: none;
+}
+
+input.quiet-field:hover:not(:disabled),
+input.quiet-field:focus,
+.quiet-field:hover:not(:disabled),
+.quiet-field:focus {
+  border-color: var(--border);
+}
+
+/* A number typed into a table keeps the row's height, not a control's. */
+input.quiet-number,
+.quiet-number {
+  min-height: 0;
+  padding: var(--space-1) var(--space-2);
+}

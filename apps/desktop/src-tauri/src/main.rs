@@ -990,6 +990,10 @@ fn set_state(
 
 /// Base64, to hand a drawing over as a data URL. Writing it out is shorter than
 /// taking a dependency for it.
+///
+/// Only macOS reads a drawing off the pasteboard, so the encoder is otherwise
+/// unused; the round-trip test below still needs it on every platform.
+#[cfg(any(target_os = "macos", test))]
 fn base64(bytes: &[u8]) -> String {
     const SET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);

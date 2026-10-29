@@ -3,7 +3,8 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      # Version tags without a leading v: 0.1.0, 0.2.0, ...
+      - "[0-9]*"
 
 permissions:
   contents: write
@@ -75,18 +76,45 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: openNMR ${{ github.ref_name }}
           releaseBody: |
-            Prebuilt openNMR installers are attached below.
+            Prebuilt openNMR builds are attached below.
 
-            These builds are not code-signed. On macOS, Gatekeeper may warn that
-            the developer cannot be verified; on Windows, SmartScreen may show a
-            similar warning. Only download builds from this repository's
-            Releases page.
+            Windows: the MSI and setup.exe install the app; the portable zip
+            runs without installing but needs the WebView2 runtime.
+
+            macOS: the build is unsigned and not notarized. If macOS refuses to
+            open it, run:
+              xattr -dr com.apple.quarantine /Applications/openNMR.app
+
+            Linux: use the AppImage for a portable build, or the deb/rpm package.
+
+            These builds are not code-signed. On Windows, SmartScreen may show a
+            warning. Only download builds from this repository's Releases page.
 
             See the README for what is included and how to open the synthetic
             example.
           generateReleaseNotes: true
-          # 0.x releases are pre-releases. Set to false for a stable release.
-          prerelease: true
+          # Publish as a normal release, not a pre-release.
+          prerelease: false
           releaseDraft: false
           retryAttempts: 2
           args: ${{ matrix.args }}
+
+      # Tauri has no portable bundle target on Windows. The raw binary embeds the
+      # frontend and runs from any folder; only the WebView2 runtime is needed.
+      - name: Package portable Windows build
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force portable | Out-Null
+          Copy-Item apps/desktop/src-tauri/target/release/opennmr.exe portable/openNMR.exe
+          Compress-Archive -Path portable/openNMR.exe `
+            -DestinationPath "openNMR_${{ github.ref_name }}_x64_portable.zip"
+
+      - name: Upload portable Windows build
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" \
+            "openNMR_${{ github.ref_name }}_x64_portable.zip" --clobber

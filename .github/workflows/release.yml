@@ -105,10 +105,30 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
+          # This repository is a Cargo workspace, so the binary is written to the
+          # workspace target directory, which is not necessarily the app folder.
+          # Ask cargo instead of guessing.
+          $targetDir = (cargo metadata --format-version 1 --no-deps | ConvertFrom-Json).target_directory
+          $releaseDir = Join-Path $targetDir "release"
+          Write-Host "Workspace target directory: $targetDir"
+          Write-Host "Executables in ${releaseDir}:"
+          Get-ChildItem $releaseDir -Filter *.exe -ErrorAction SilentlyContinue | Format-Table Name, Length
+
+          $exe = Join-Path $releaseDir "opennmr.exe"
+          if (-not (Test-Path $exe)) {
+            # Fallback: the only executables directly in release/ are the app
+            # binaries, so take the largest one.
+            $exe = Get-ChildItem $releaseDir -File -Filter *.exe -ErrorAction SilentlyContinue |
+              Sort-Object Length -Descending |
+              Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $exe) { throw "No executable found in $releaseDir" }
+          Write-Host "Packaging $exe"
+
           New-Item -ItemType Directory -Force portable | Out-Null
-          Copy-Item apps/desktop/src-tauri/target/release/opennmr.exe portable/openNMR.exe
-          Compress-Archive -Path portable/openNMR.exe `
-            -DestinationPath "openNMR_${{ github.ref_name }}_x64_portable.zip"
+          Copy-Item $exe "portable/openNMR.exe"
+          Compress-Archive -Path "portable/openNMR.exe" -DestinationPath "openNMR_${{ github.ref_name }}_x64_portable.zip" -Force
+          Write-Host "Created openNMR_${{ github.ref_name }}_x64_portable.zip"
 
       - name: Upload portable Windows build
         if: matrix.platform == 'windows-latest'
